@@ -1,6 +1,6 @@
 Ohjelmistotuotanto 2 projekti: Apoa hanke. Ohjelmiston tarkoituksena on kerätä tietoja opiskelijoiden opiskelun aikaisesta hyvinvoinnista ja siten analysoida ja visualisoida tätä dataa esitettäväksi opiskelijoille, sekä opettajille.
 
-Tietokanta: ORM (Entity Framework Core) Palvelinpuolen ohjelmointi: ASP.NET Core (MVC, (Model, View, Controller)) Asiakasohjelma: ASP.NET Core, HTML, CSS, JS (jQuery)
+Tietokanta: ORM (Entity Framework Core) Palvelinpuoli: ASP.NET Core (MVC, (Model, View, Controller)) Client: ASP.NET Core, HTML, CSS, JS (jQuery)
 
 Projektin jäsenet: Antti Nikku, Henri Kosonen, Jani Passi, Teemu Tossavainen
 
