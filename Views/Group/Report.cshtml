@@ -1,0 +1,133 @@
+@model Apoa.Models.ViewModels.GroupViewModel
+
+@if(Model == null) {
+    return;
+}
+
+<div class="row">
+    <div class="col-md-12">
+      <div class="row">
+          <div class="col-md-8">
+            <h1>Ryhmän vastaukset</h1>
+          </div>
+          <div class="col-md-4 pull-right form-inline">
+            <select class="form-control" id="asty" style="width:45%;">
+
+                @foreach(var c in Model.Categories) {
+                  <option data-id="@c.Id">@c.Name</option>
+                }
+
+            </select>
+            <select name="year" id="year" class="form-control" style="margin-left:20px;width:45%;">
+                @for(int j = DateTime.Now.Year; j > DateTime.Now.Year - 4; j--) {
+                  if(j == Model.Year) {
+                    <option value="@j" selected>@j</option>
+                  } else {
+                      <option value="@j">@j</option>
+                  }
+                }
+            </select>
+          </div>
+
+        </div>
+        <div id="charts" data-id="@Model.Year" style="margin-top: 20px;" >
+          @if(Model.Categories.Any()) {
+            @foreach(var a in Model.Categories[0].Assessments) {
+              <div id="chart-@a.Id"></div>
+            }         
+          } else {
+            <p>Ei vastauksia</p>
+          }
+        </div>
+    </div>
+</div>
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+
+      function drawYear(year, cId) {
+          //Käkkyrä
+          console.log("before ajax")
+                      
+          $.get("@Url.Action("GetData")", {cId : cId, year : year, groupId : "@Model.Group.Id" }, (data) => {
+
+              console.log("Dataa ajaxilta: ",data);
+              var chartContainer = $("#charts");
+              $(chartContainer).empty();
+              data.map((item, index) => {
+                //$(chartContainer).empty();
+                $(chartContainer).append("<div class='chart-container' id='chart-" + item.id + "'</div>");
+
+                var months = ["Tammi", "Helmi", "Maalis", "Huhti", "Touko", "Kesä", "Heinä", "Elo", "Syys", "Loka", "Marras", "Joulu"]
+
+                var chartData = [];
+                chartData.push(["Kuukausi", "Vastaus"]);
+
+                item.responses.map((item, index) => {
+                  
+                  if(item.value != "NaN")
+                    chartData.push([months[item.month - 1] + "kuu", item.value]);
+                
+                });
+
+                var hasResponses = item.responses.every((x) => x.value == "NaN");
+
+                  if(!hasResponses) {
+                    function drawChart() {
+                      // Create the data table.
+                      var data = google.visualization.arrayToDataTable(chartData);
+                      // Set chart options
+                      var options = {
+                          title: item.name,
+                          legend: 'none',
+                          bar: {groupWidth: '100%'},
+                          vAxis: { 
+                            gridlines: { count: 2 },
+                            format : '0',
+                            viewWindow: {
+                                max: item.max,
+                                min: item.min
+                              }
+                            },
+                          hAxis: { 
+                            format : '0',
+                          }
+                        };
+                      // Instantiate and draw our chart, passing in some options.
+                      var chart = new google.visualization.LineChart(document.getElementById("chart-" + item.id));
+                      chart.draw(data, options);
+                    }
+                    google.charts.load('current', {'packages':['corechart']});
+                    google.charts.setOnLoadCallback(drawChart);
+                } else {
+                  $("#chart-" + item.id).append("<h2>Vuodelle ei ole vastauksia</h2>");
+                }
+              });
+
+            }).fail(() => {
+              console.log("Jotain meni pieleen")
+            })
+
+      }
+    
+      $(() => {
+
+        drawYear(@DateTime.Now.Year, $("#asty option:selected").data("id"))
+        
+        $("#asty").on("change",() => {
+          var selected = $("#asty option:selected").data("id");
+          var year = $("#year option:selected").val();
+
+          drawYear(year, selected)
+          //location.href="@Url.Action("Report",new {id=Model.Group.Id})?cId="+selected
+        })
+
+        $("#year").on("change",()=>{
+          var selected = $("#asty option:selected").data("id");
+          var year = $("#year option:selected").val();
+
+          drawYear(year, selected)
+        })
+      })
+  </script>
+   

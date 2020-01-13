@@ -1,0 +1,191 @@
+@model Apoa.Models.ViewModels.ResponseViewModel
+@{
+  var hasAssessments = Model.categories.Any(c => c.Assessments.Count() > 0);
+}
+@if(!hasAssessments) {
+  <h1>Käyttäjälle ei ole kysymyksiä</h1>
+  return;
+}
+<h1>Kysymykset</h1>
+<hr>
+<div class="row">
+  <div class="col-md-3">
+    
+        <ol class="list list-unstyled sticky-top" style="list-style-type:none; width:100%;">
+            @{
+              for(int i = 0; i < Model.categories.Count(); i++) {
+                int count = i + 1;
+                if(i == 0)
+                {
+                  <li style="width:100%;">
+                    <a data-id="@i" href="#" data-toggle="tooltip" class="nav-link category btn btn-primary"> @count. @Model.categories.ElementAt(i).Name</a>
+                  </li>  
+                } else {
+                  <li style="width:100%;">
+                    <a data-id="@i" href="#" data-toggle="tooltip" class="nav-link category"> @count. @Model.categories.ElementAt(i).Name</a>
+                  </li>
+                }
+              }
+            }
+          <li>
+            <button id="submit" class="btn btn-primary" style="margin-top:40px;"">Lähetä</button>
+          </li>
+        </ol>
+  </div>
+  <div class="col-md-9">
+    <form id="x">
+      @for(int i = 0; i < Model.categories.Count(); i++) {
+        @if(Model.categories.ElementAt(i).Assessments.Count()!=0)
+        {
+          <div id="category-container-@i" data-id="@i" class="category-container">
+          <h1 style="text-decoration:underline; margin-left:20px;">@Model.categories.ElementAt(i).Name</h1>
+
+          @foreach(var question in Model.categories.ElementAt(i).Assessments) {
+            <table style="margin-top:20px; margin-left:20px;">
+              <tbody>
+                <tr>
+                  <td><h4>@question.Name</h4></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="btn-group btn-group-toggle" style="padding-bottom:30px" data-toggle="buttons">
+                      @for(int j = question.ResponseOptions.Min; j <= question.ResponseOptions.Max; j++) {
+                          <label class="btn btn-primary">
+                            <input type="radio" name="@question.Id" value="@j" autocomplete="off">@j
+                          </label>
+                      }
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <textarea class="form-control rounded-0" style="width:380px" placeholder="Kommentti" id="textarea-@question.Id"></textarea>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          }
+        </div>
+        }       
+      }
+    </form>
+      
+    <!-- <nav aria-label="Page navigation" style="margin-top:20px; margin-left:20px;">
+      <ul class="pagination">
+        <li class="page-item">
+          <button id="previous" class="page-link">Edellinen</button>
+        </li>
+        <li class="page-item">
+          <button id="next" class="page-link">Seuraava</button>
+        </li>
+        <li class="page-item">
+          
+        </li>
+      </ul>
+    </nav> -->
+  </div>
+</div>
+
+<script>
+  $(() => {
+    // Piilotetaan alkuksi previousnappi koska ykkösruudusta ei pääse taakseppäin
+    $("#previous").hide();
+
+    // Piilotetaan kaikki boksit mutta näytetään ensimmäinen
+    $(".category-container").hide();
+    $(".category-container").first().show();
+
+    // Tooltipit käyttöön
+    $('[data-toggle="tooltip"]').tooltip()
+    
+    // Numeronappien kontrollit klikillä
+    $(".category").on("click", function() {
+      $(".category").removeClass("btn btn-primary")
+      $(this).addClass("btn btn-primary");
+      
+    // piilotetaan kaikki tooltipit ja categoria boksit
+    $('[data-toggle="tooltip"]').tooltip("hide");
+    $(".category-container").hide();
+
+    // jos ollaan ensimmäisessä ei näytetä taakse nappia
+    $("#category-container-" + $(this).data("id")).show();
+      if($(this).data("id") == 0)
+        $("#previous").hide();
+      else
+        $("#previous").show();
+
+    });
+
+    // seuraava napit kontrollit klikillä
+    $("#next").on("click", function() {
+
+      //etsitään se mikä on näkyvissä ja lisätään seuraavaan yksi
+      var c = $(".category-container:visible");
+      var next = $(c).data("id") + 1;
+      // piilotetaan seuraava
+      $(".category-container").hide();
+      
+      // Näytetään seuraava kontainer ja edellinen nappi
+      $("#category-container-" + next).show();
+      $("#previous").show();
+      
+      // Jos ollaa viimeisessä näytetään lähetä ja piilotetaan seuraava
+      if($(c).data("id") == $(".category-container").length - 2) {
+        $("#next").hide();
+        $("#submit").show();
+      }
+    });
+
+    // Edellinen napin klikki
+    $("#previous").on("click", function() {
+      // Etsitään näkyvä ja laitetaan kaikki piiloon
+      var c = $(".category-container:visible");
+      $(".category-container").hide();
+
+      // Vähennetään näkyvästä 1
+      var previous = $(c).data("id") - 1;
+
+      // Näytetään edellinen
+      $("#category-container-" + previous).show();
+
+      // Näytetään aina seuraava jos painaa edellistä
+      $("#next").show();
+      $("#submit").hide();
+
+      // Piilotetaan edellinen jos ollaan alussa
+      if($(c).data("id") == 1) {
+        $("#previous").hide();
+      }
+    });
+
+    // Lähetys napit klikki
+    $("#submit").on("click", function() {
+      // serialisoidaan lomakkeen data
+      var form = $("#x").serializeArray();
+      var data = [];
+      // Parsitaan siitä js objecti
+      form.map((item, index) => {
+        obj = {};
+        obj.value = item.value;
+        obj.AssessmentId = item.name
+        obj.Body = $("#textarea-" + item.name).val();
+        data.push(obj);
+      });
+
+      // Jos on jotain niin lähetään kontrollerille vastauksen lisääjään
+      if (data.length > 0) {
+        $.post("@Url.Action("AddResponse", "Response")", {responses : data}, function(data) {
+          if (data.status) {
+            location.href = "@Url.Action("Index", "Home")";
+          }else {
+            alert(data.message)
+          }
+        }).fail(function() {
+            alert("Jotain meni pieleen");
+        }); 
+      } else {
+          alert("Et vastannut yhteenkään kysymykseen")
+      } 
+    });
+  });
+</script>
+

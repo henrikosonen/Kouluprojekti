@@ -1,0 +1,94 @@
+@model List<Apoa.Models.Group>
+
+<div class="row">
+    <div class="col-md-8">
+        <h1>Ryhmät</h1>
+        <form class="form-inline" style="padding-bottom: 10px; padding-top: 10px; width: 20%">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            <input class="form-control form-control-sm ml-3 w-75" id="searchInput" type="text" onkeyup="searchGroup()" placeholder="Etsi ryhmä" aria-label="Search">
+        </form>
+    </div>
+    <div class="form-inline col-md-4 d-flex justify-content-end"">
+        <form id="groupForm">   
+            <input id="Name" name="Name" class="form-control" type="text" placeholder="Lisää uusi ryhmä"/>    
+        </form>
+        <button data-toggle="tooltip" title="Lisää ryhmä" id="addGroup" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        @if(Model != null) {
+            <table id="groupTable" class="table table-striped">
+                <thead>
+                    <tr>
+                        <th><a href="" style="color:black">Nimi</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var group in Model) {
+                        <tr>
+                            <td><a href="@Url.Action("Report", new {id = group.Id})">@group.Name</a></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<script>
+    $(() => {
+        $(document).keypress(function(e) {
+            if(e.which == 13) {
+                postPress();
+            }
+        });
+
+        $('[data-toggle="tooltip"]').tooltip()
+
+        function postPress() {
+            var data = $("#groupForm").serialize();
+            $.post("@Url.Action("AddGroup", "Group")", data, function(res) {
+                console.log(res);
+
+                if (res.status) {
+                    window.location.reload();
+                } else {
+                    alert(res.message)
+                }
+            }).fail(function() {
+                alert("Jotain meni pieleen");
+            });
+        }
+
+        $("#addGroup").on("click", function(e) {
+            e.preventDefault();
+            postPress();    
+        });
+    });
+
+    function searchGroup() {
+        // Declare variables
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("searchInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("groupTable");
+        tr = table.getElementsByTagName("tr");
+
+        // Loop through all table rows, and hide those who don't match the search query
+        for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[0];
+            if (td) {
+                txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>

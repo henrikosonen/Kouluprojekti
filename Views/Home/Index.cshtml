@@ -1,0 +1,239 @@
+﻿@model Apoa.Models.ViewModels.HomeViewModel
+@{
+    var isTeacher = User.IsInRole("Opettaja");
+}
+<div class="row">
+    <div class="col-md-8 text-left">
+        <h1 class="display-4">Tervetuloa</h1>
+        @if(!isTeacher) {
+            <p>Ole hyvä ja valitse ryhmäsi oikealta</p>
+        } else {
+            
+        }
+        
+    </div>
+
+    <div class="col-md-4 text-right">
+    @if (!isTeacher)
+    {
+        <form id="userGroup" style="display:inline-block;">
+            <select class="form-control" name="groupId">
+                @foreach(var g in Model.Groups) 
+                {
+                    <option value="@g.Id">@g.Name</option>
+                }
+            </select>
+        </form>
+        <button id="saveGroup" class="btn btn-primary">Tallenna</button> 
+    }
+    </div>
+</div>
+@if(!isTeacher) {
+<div class="row">
+    <div class="col-md-12 form-inline pull-rigth">
+        @if(Model.Categories.Count() > 0) {
+            <select id="categories" name="categories" class="form-control">
+                @foreach (var c in Model.Categories)
+                {
+                    <option value="@c.Id">@c.Name</option>
+                }
+            </select>
+        }
+        @if(Model.Categories.Count() > 0) {
+            <select name="year" id="year" class="form-control" style="margin-left:5px;">
+                <option value="0">Edellinen 3kk</option>
+                @for(int i = DateTime.Now.Year; i > DateTime.Now.Year - 4; i--) {
+                if(i == Model.Year) {
+                    <option value="@i" selected>@i</option>
+                } else {
+                    <option value="@i">@i</option>
+                }
+                }
+            </select>
+        }
+    </div>
+    <div class="col-md-12">
+        <div id="charts" data-id="@Model.Year" style="margin-top: 20px;" >
+            @if(Model.Categories.Count() > 0) {
+                if(Model.Categories[0].Assessments.Count() > 0) {
+                    foreach(var a in Model.Categories[0].Assessments) {
+                        <div class="chart-container" id="chart-@a.Id" data-min="@a.ResponseOptions.Min" data-max="@a.ResponseOptions.Max"></div>
+                    }
+                }
+            }
+        </div>
+    </div>
+</div>
+}
+
+    <script>
+        $("#saveGroup").on("click", function() {
+         
+            $.post("@Url.Action("SaveStudentGroup")", $("#userGroup").serialize(), function(data) {
+                if(data.status) {
+                    alert(data.message);
+                }else {
+                    alert(data.message);
+                }
+            }).fail(function() {
+                alert("Ryhmän valinta epäonnistui");
+            });
+        });
+    </script>
+
+    @if(Model.Categories.Count() == 0) {
+        return;
+    }
+     
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+    <script type="text/javascript">
+      
+      function draw3kk() {
+        var category = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Categories[0]));
+
+
+        var assesmentselected = $("#categories").val();
+        console.log(category);
+        category.Assessments.map((item, index) => {
+            var chartData = [];
+            chartData.push(["Pvm", "Vastaus"]);
+            
+            item.Responses.map((item, index) => {
+                chartData.push(["Viikko " + item.Week.toString(), item.Value])
+            });
+
+            var max = $("#chart-" + item.Id).data("max");
+            var min = $("#chart-" + item.Id).data("min");
+
+            var ticks = [];
+
+            for (var i = min; i <= max; i++) {
+              ticks.push(i);
+            }
+
+            function drawChart() {
+              // Create the data table.
+              var data = google.visualization.arrayToDataTable(chartData);
+              // Set chart options
+              var options = {
+                  title: item.Name,
+                  legend: 'none',
+                  //curveType: 'function',
+                  bar: {groupWidth: '95%'},
+                  vAxis: { 
+                    gridlines: { count: 2 },
+                    format : '0',
+                    viewWindow: {
+                      max: max,
+                      min: min
+                    },
+                    ticks : ticks,
+                    },
+                  hAxis: { 
+                    format : '0',
+                    
+                  }
+                };
+              // Instantiate and draw our chart, passing in some options.
+              var chart = new google.visualization.LineChart(document.getElementById("chart-" + item.Id));
+              chart.draw(data, options);
+            }
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+        });
+      }
+
+        function DrawYear(year, cId) {
+
+
+            $.get("@Url.Action("GetYearData")", {userId : "@Model.User.Id", cId : cId, year : year}, (data) => {
+
+              console.log("Data: ",data);
+              var chartContainer = $("#charts");
+              data.map((item, index) => {
+                //$(chartContainer).empty();
+                $(chartContainer).append("<div class='chart-container' id='chart-" + item.id + "'</div>");
+
+                var months = ["Tammi", "Helmi", "Maalis", "Huhti", "Touko", "Kesä", "Heinä", "Elo", "Syys", "Loka", "Marras", "Joulu"]
+
+                var chartData = [];
+                chartData.push(["Kuukausi", "Vastaus"]);
+
+                item.data.map((item, index) => {
+                  
+                  if(item.value != "NaN")
+                    chartData.push([months[item.month - 1] + "kuu", item.value]);
+                
+                });
+
+                var ticks = [];
+                for(var i = item.min; i < item.max; i++) {
+                  ticks.push(i);
+                }
+                    
+                //console.log(ticks);
+
+                function drawChart() {
+                  // Create the data table.
+                  var data = google.visualization.arrayToDataTable(chartData);
+                  // Set chart options
+                  var options = {
+                      title: item.name,
+                      legend: 'none',
+                      //curveType: 'function',
+                      bar: {groupWidth: '100%'},
+                      vAxis: { 
+                        gridlines: { count: 2 },
+                        format : '0',
+                        viewWindow: {
+                            max: item.max,
+                            min: item.min
+                          }
+                        },
+                        ticks : ticks,
+                      hAxis: { 
+                        format : '0',
+                        
+                      }
+                    };
+                  // Instantiate and draw our chart, passing in some options.
+                  var chart = new google.visualization.LineChart(document.getElementById("chart-" + item.id));
+                  chart.draw(data, options);
+                }
+                google.charts.load('current', {'packages':['corechart']});
+                google.charts.setOnLoadCallback(drawChart);
+
+              });
+
+            }).fail(() => {
+              console.log("Jotain meni pieleen")
+            })
+            /*
+            
+            */
+      }
+    
+        $(() => {
+        
+            var data = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(@Model.Categories[0]));
+
+            draw3kk();
+            
+
+            $("#categories").on("change",() => {
+            var selected = $("#categories option:selected").val();
+            console.log("Valinta on: ",selected)
+            location.href="@Url.Action("Index")?cId="+selected
+            })
+
+            $("#year").on("change",()=>{
+            var selected = $("#categories option:selected").val();
+            var year = $("#year option:selected").val();
+            if (year == 0)
+                location.href="@Url.Action("Index")?cId="+selected
+            //console.log("Valinta on: ",assesmentselected)
+                DrawYear(year, selected)
+            })
+        })
+</script>

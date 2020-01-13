@@ -1,0 +1,27 @@
+  @model List<Apoa.Models.UserGroup>
+
+<div class="row">
+    <div class="col-md-12">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Käyttäjätunnus</th>
+                    <th>Ryhmä</th>
+                    <th>Rooli</th>
+                </tr>
+            </thead>
+            <tbody>
+               @foreach (var group in Model)
+               {
+                   <tr>
+                        <td><a href="@Url.Action("Report", "Students", new {id = group.UserId })">@group.User.Email</a></td>
+                        <td>@group.Group.Name</td>
+                        <td>
+                            @group.User.GetUserRole()
+                        </td>
+                   </tr>
+               }
+            </tbody>
+        </table>
+    </div>
+</div>

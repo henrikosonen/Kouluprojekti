@@ -1,0 +1,107 @@
+@model Apoa.Models.ViewModels.UsersViewModel
+
+<div class="row">
+    <form class="form-inline" style="padding-bottom: 10px; padding-left: 20px">
+        <i class="fas fa-search" aria-hidden="true"></i>
+        <input class="form-control form-control-sm ml-3 w-75" id="searchInput" type="text" onkeyup="searchUser()" placeholder="Etsi käyttäjä" aria-label="Search">
+    </form>
+    <div class="col-md-12">
+
+        <table id="userTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Sähköpostiosoite</th>
+                    <th>Ryhmä</th>
+                    <th>Rooli</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+               @foreach (var user in Model.Users)
+               {
+                   <tr>
+                        <td>@user.UserName</td>
+                        <td>
+                            <select  data-id="@user.Id" name="groupId" class="form-control group" data-target="#groupModal">
+                                @foreach (var grp in Model.Groups)
+                                {
+                                    
+                                    var ugrp = user.UserGroups.FirstOrDefault();
+                                    
+                                    if (ugrp != null) {
+                                        if (ugrp.User.Email.Split("@")[1] != "savonia.fi") {
+                                            @if(grp.Id == ugrp.GroupId) {
+                                                <option data-id="@grp.Id" selected>@grp.Name</option>
+                                            }else {
+                                                <option data-id="@grp.Id">@grp.Name</option>
+                                            }
+                                        } else {
+
+                                            @if(grp.Id == ugrp.GroupId) {
+                                                <option data-id="@grp.Id" selected disabled>@grp.Name</option>
+                                            }else {
+                                                <option data-id="@grp.Id" disabled>@grp.Name</option>
+                                            }
+
+                                        }
+                                    }else {
+                                        <option data-id="@grp.Id">@grp.Name</option>
+                                    }
+                                }
+                            </select>
+                            
+                        </td>
+                        <td>
+                            <label>@user.GetUserRole()</label>
+                        </td>
+                        <td></td>
+                   </tr>
+               }
+            </tbody>
+        </table>
+    </div>
+</div>
+<div id="GroupModalContainer">
+    <div id="editGroupModalContainer"></div>
+</div>
+<script>
+    $(() => {
+        // Tähän lootaan changilla, ilman buttonia painamista ryhmä vaihdetuksi.
+        $(".group").on("change", function(e) {
+            e.preventDefault();
+            var userId = $(this).data("id");
+            var groupId = $(this).find("option:selected").data("id");
+            if (window.confirm("Haluatko varmasti vaihtaa ryhmän?")) {
+                $.post("@Url.Action("EditGroup")", {userId : userId, groupId : groupId }, function(data) {
+                    if (!data.status) {
+                        alert(data.message);
+                    }
+                }).fail(function() {
+                    alert("Jotain meni pieleen");
+                });
+            }
+        });
+    });
+
+    function searchUser() {
+        // Declare variables
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("searchInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("userTable");
+        tr = table.getElementsByTagName("tr");
+
+        // Loop through all table rows, and hide those who don't match the search query
+        for (i = 0; i < tr.length; i++) {
+            td = tr[i].getElementsByTagName("td")[0];
+            if (td) {
+                txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>

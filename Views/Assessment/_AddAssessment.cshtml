@@ -1,0 +1,54 @@
+@model Apoa.Models.Category
+<!-- Modal ikkuna, avataan kun käyttäjä painaa plus nappulaa -->
+<div class="modal fade" id="assessmentModal" tabindex="-1" role="dialog" aria-labelledby="assessmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Lisää kysymys</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="assessmentForm">
+            <input type="hidden" name="CategoryId" id="CategoryId" value="@Model.Id">
+            <input type="text" name="Name" class="form-control" placeholder="Nimi" required>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Sulje</button>
+        <button id="addAssessment" type="button" class="btn btn-primary">Tallenna</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  $(() => {
+    //Enter press event
+    $(document).keypress(function(e) {
+
+        if(e.which == 13) {
+            postPress();
+        }
+    });
+    
+    $("#addAssessment").click((e) => {
+      postPress();
+    });
+  });
+
+  function postPress(){
+    var data = $("#assessmentForm").serialize();
+
+
+    $.post("@Url.Action("AddAssessment")", data, (response) => {
+      if (response.status) {
+        $('#assessmentModal').modal("hide");
+        window.location.reload()
+        }
+    }).fail(() => {
+        alert("Jotain meni pieleen");
+    })
+  }
+</script>

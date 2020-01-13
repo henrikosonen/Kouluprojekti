@@ -1,0 +1,64 @@
+@using System.Security.Principal
+
+
+@if (User.Identity.IsAuthenticated) {       
+    string[] userParts = User.Identity.Name.Split('@');
+    
+    <header>
+        <ul class="navbar-nav">
+            <nav class="apoa-color navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+                <div class="container-fluid">
+                    <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                        <img style="widht:100px;height:100px;" src="~/img/apoa.png"/>
+                    </a>
+                    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="navbar-collapse collapse d-sm-inline-flex flex-sm-row-reverse">
+                        <ul class="navbar-nav" style="display:inline-block;">
+                            <li class="nav-item">
+                                <a id="forgot-password" href="Identity/Account/Manage">@User.Identity.Name</a>
+                            </li>
+                            <li class="nav-item ml-5">
+                                <!-- <a href="Identity/Account/Logout">Kirjaudu ulos</a> -->
+                                <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+                                    <button  type="submit" class="nav-link btn btn-link text-dark" style="float: right;">Kirjaudu ulos</button>
+                                </form>
+                            </li>
+                        </ul>
+                        
+                        @if (User.IsInRole("Opettaja")) /* tarkastetaan onko käyttäjä opettaja, opettajan navigointi*/
+                        {
+                            <ul class="navbar-nav flex-grow-1">
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Students" asp-action="Index">Omat opiskelijat</a>  
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Users" asp-action="Index">Käyttäjät</a> 
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Group" asp-action="Index">Ryhmät</a> 
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Assessment" asp-action="Index">Arvioinnit</a> 
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Response" asp-action="Index">Kysymykset</a>
+                                </li>
+                            </ul>
+                        }
+                        
+                        @if (User.IsInRole("Opiskelija"))    /* tarkastetaan onko oppilas, oppilaan navigointi*/
+                        {
+                            <ul class="navbar-nav flex-grow-1">
+                                <li class="nav-item">
+                                    <a class="nav-link text-dark" asp-area="" asp-controller="Response" asp-action="Index">Kysymykset</a>
+                                </li>
+                            </ul>
+                        }
+                    </div>
+                </div>
+            </nav>
+        </ul>
+    </header>
+}

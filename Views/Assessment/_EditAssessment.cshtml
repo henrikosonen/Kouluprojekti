@@ -1,0 +1,113 @@
+@model Apoa.Models.ViewModels.EditAssessmentViewModel
+<!-- Modal ikkuna, avataan kun käyttäjä painaa plus nappulaa -->
+<div class="modal fade" id="editAssessmentModal" tabindex="-1" role="dialog" aria-labelledby="assessmentModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Muokkaa kysymystä</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editAssessmentForm">
+
+            <input type="hidden" name="Id" id="AssessmentId" value="@Model.Assessment.Id">
+
+            <div class="form-group">
+                <label for="Name">Nimi</label> 
+                <input type="text" id="Name" name="Name" class="form-control" placeholder="Nimi" value="@Model.Assessment.Name"required>
+            </div>
+
+            <div class="form-group">
+                <label for="CategoryId">Kategoria</label>
+                <select Id="CategoryId" name="CategoryId" class="form-control">
+                    @foreach (var c in Model.Categories)
+                    {
+                        // Tag helper ongelma, piti tehdä näin
+                        if(Model.Assessment.CategoryId == c.Id) {
+                            <option value="@c.Id" selected>@c.Name</option>
+                        } else { 
+                            <option value="@c.Id">@c.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+             <div class="form-group">
+                <label for="ResponseOptionsId">Vastausmalli</label>
+                <select Id="ResponseOptionsId" name="ResponseOptionsId" class="form-control">
+                    @foreach (var o in Model.responseOptions)
+                    {
+                        // Tag helper ongelma, piti tehdä näin
+                        if(Model.Assessment.ResponseOptionsId == o.Id) {
+                            <option value="@o.Id" selected>@o.Min - @o.Max</option>
+                        } else { 
+                            <option value="@o.Id">@o.Min - @o.Max</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            @*
+            <div class="form-group">
+                <label for="ResponseOptionID">Vastaustavat</label>
+                    <select Id="ResponseOptionID" name="ResponseOptionID" class="form-control">
+                        <option value="Testi" selected>Testi</option>
+
+                        @for(int j = 0; j < Model.responseOptions.Count(); j++) {
+                            <label class="btn btn-info">
+                                <input type="radio" name="@question.Id" value="@Model.responseOptions.ElementAt(j).Key" autocomplete="off"> 
+                                @Model.responseOptions.ElementAt(j).Key - @Model.responseOptions.ElementAt(j).Value
+                            </label>
+                        }
+
+                        @foreach (var c in Model.responseOptions) {
+                            <option value="@c.Id" selected>@c.Id</option>
+                        }
+                    </select>
+            </div>
+            *@
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="deleteAssessment" class="btn btn-danger" data-id="@Model.Assessment.Id">
+            <i class="fas fa-trash"></i>
+        </button>
+        <button id="editAssessment" type="button" class="btn btn-primary">Tallenna</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $(() => {
+        $("#editAssessment").click((e) => {
+            var data = $("#editAssessmentForm").serialize();
+
+            $.post("@Url.Action("EditAssessment")", data, (response) => {
+                if (response.status) {
+                    $('#assessmentModal').modal("hide");
+                    location.reload();
+                }
+            }).fail(() => {
+                alert("Jotain meni pieleen");
+            })
+        });
+
+        $('#deleteAssessment').on("click", function() {
+                
+            if ($(this).data("id") != 0 && $(this).data("id") != 'undefined') {
+                if (window.confirm('Haluatko varmasti poistaa kysymyksen? ')) {
+                    $.post("@Url.Action("DeleteAssessment")", {id : $(this).data("id")}, response => {
+                        if (response.status) {
+                            location.reload();
+                        }
+                    }).fail(() => {
+                        alert("Jotain meni pieleen");
+                    });
+                }
+            }
+        });
+    });
+</script>

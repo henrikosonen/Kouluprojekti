@@ -1,0 +1,219 @@
+@model Apoa.Models.ViewModels.UserResponseViewModel
+    <!--Load the AJAX API-->
+
+@if (Model == null) {
+  return;
+}
+
+@if (Model.Categories.Count().Equals(0)) {
+
+    <div>
+      <h1>Käyttäjä @Model.User.UserName ei ole antanut yhtään vastausta</h1>
+    </div>
+
+    return;
+
+}
+
+
+<div class="row">
+    <div class="col-md-12">
+      <div class="row">
+          <div class="col-md-8">
+            <h1>Käyttäjän @Model.User.Email vastaukset</h1>
+          </div>
+          <div class="col-md-4 pull-right form-inline">
+            <select style="width:45%;" class="form-control" id="asty">
+              @foreach(var c in Model.Categories) {
+                <option data-id="@c.Id">@c.Name</option>
+              }
+            </select>
+            <select name="year" style="width:45%; margin-left:10px;" id="year" class="form-control" style="margin-left:20px;">
+              <option value="0">Edellinen 3kk</option>
+              @for(int i = DateTime.Now.Year; i > DateTime.Now.Year - 4; i--) {
+                if(i == Model.Year) {
+                  <option value="@i" selected>@i</option>
+                } else {
+                  <option value="@i">@i</option>
+                }
+              }
+            </select>
+          </div>
+        </div>
+        <div id="charts" data-id="@Model.Year" style="margin-top: 20px;" >
+          @if(Model.Categories.Any()) {
+            @foreach(var a in Model.Categories[0].Assessments) {
+              <div class="chart-container" id="chart-@a.Id" data-min="@a.ResponseOptions.Min" data-max="@a.ResponseOptions.Max"></div>
+            }
+          } else {
+            <p>Ei vastauksia</p>
+          }
+        </div>
+    </div>
+    <!-- <div class="col-md-6">
+        <h1>Ryhmän romut</h1>
+        <div id="curve_chart"></div>
+        <p>asdasdsadsadasdsad</p>
+        <p>piirtää graaffia</p>
+    
+    </div> -->
+</div>
+
+
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript">
+      
+      function draw3kk() {
+        var category = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Categories[0]));
+
+
+        var assesmentselected = $("#asty").val();
+        console.log(category);
+        category.Assessments.map((item, index) => {
+            var chartData = [];
+            chartData.push(["Pvm", "Vastaus"]);
+            
+            item.Responses.map((item, index) => {
+                chartData.push(["Viikko " + item.Week.toString(), item.Value])
+            });
+
+            var max = $("#chart-" + item.Id).data("max");
+            var min = $("#chart-" + item.Id).data("min");
+
+            var ticks = [];
+
+            for (var i = min; i <= max; i++) {
+              ticks.push(i);
+            }
+
+            function drawChart() {
+              // Create the data table.
+              var data = google.visualization.arrayToDataTable(chartData);
+              // Set chart options
+              var options = {
+                  title: item.Name,
+                  legend: 'none',
+                  //curveType: 'function',
+                  bar: {groupWidth: '95%'},
+                  vAxis: { 
+                    gridlines: { count: 2 },
+                    format : '0',
+                    viewWindow: {
+                      max: max,
+                      min: min
+                    },
+                    ticks : ticks,
+                    },
+                  hAxis: { 
+                    format : '0',
+                    
+                  }
+                };
+              // Instantiate and draw our chart, passing in some options.
+              var chart = new google.visualization.LineChart(document.getElementById("chart-" + item.Id));
+              chart.draw(data, options);
+            }
+            google.charts.load('current', {'packages':['corechart']});
+            google.charts.setOnLoadCallback(drawChart);
+        });
+      }
+      
+        function DrawYear(year, cId) {
+
+
+            $.get("@Url.Action("GetYearData")", {userId : "@Model.User.Id", cId : cId, year : year}, (data) => {
+
+              
+              var chartContainer = $("#charts");
+              $(chartContainer).empty();
+              if(data.length > 0) {
+              data.map((item, index) => {
+                //$(chartContainer).empty();
+                $(chartContainer).append("<div class='chart-container' id='chart-" + item.id + "'</div>");
+
+                var months = ["Tammi", "Helmi", "Maalis", "Huhti", "Touko", "Kesä", "Heinä", "Elo", "Syys", "Loka", "Marras", "Joulu"]
+
+                var chartData = [];
+                chartData.push(["Kuukausi", "Vastaus"]);
+
+                item.data.map((item, index) => {
+                  
+                  if(item.value != "NaN")
+                    chartData.push([months[item.month - 1] + "kuu", item.value]);
+                
+                });
+
+                var ticks = [];
+                for(var i = item.min; i < item.max; i++) {
+                  ticks.push(i);
+                }
+                var hasResponses = item.data.every((x) => x.value == "NaN");
+                //console.log(ticks);
+                if(!hasResponses) {
+                function drawChart() {
+                  // Create the data table.
+                  var data = google.visualization.arrayToDataTable(chartData);
+                  // Set chart options
+                  var options = {
+                      title: item.name,
+                      legend: 'none',
+                      //curveType: 'function',
+                      bar: {groupWidth: '100%'},
+                      vAxis: { 
+                        gridlines: { count: 2 },
+                        format : '0',
+                        viewWindow: {
+                            max: item.max,
+                            min: item.min
+                          }
+                        },
+                        ticks : ticks,
+                      hAxis: { 
+                        format : '0',
+                        
+                      }
+                    };
+                  // Instantiate and draw our chart, passing in some options.
+                  var chart = new google.visualization.LineChart(document.getElementById("chart-" + item.id));
+                  chart.draw(data, options);
+                }
+                google.charts.load('current', {'packages':['corechart']});
+                google.charts.setOnLoadCallback(drawChart);
+                } else {
+                  $(chartContainer).append("<h2>Ei vastauksia vuodelle</h2>");
+                }
+              });
+              } else {
+                $(chartContainer).append("<h2>Ei kysymyksiä vuodelle</h2>");
+              }
+
+            }).fail(() => {
+              console.log("Jotain meni pieleen")
+            })
+            /*
+            
+            */
+      }
+
+      $(() => {
+
+        draw3kk();
+        
+
+        
+        $("#asty").on("change",() => {
+          var selected = $("#asty option:selected").data("id");
+          //console.log("Valinta on: ",assesmentselected)
+          location.href="@Url.Action("Report",new {id=Model.User.Id})?cId="+selected
+        })
+
+        $("#year").on("change",()=>{
+          var selected = $("#asty option:selected").data("id");
+          var year = $("#year option:selected").val();
+          if (year == 0)
+            location.href="@Url.Action("Report",new {id=Model.User.Id})?cId="+selected + "&year=" + year
+          //console.log("Valinta on: ",assesmentselected)
+            DrawYear(year, selected)
+        })
+      })
+    </script>

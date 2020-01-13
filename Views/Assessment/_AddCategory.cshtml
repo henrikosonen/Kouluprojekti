@@ -1,0 +1,55 @@
+<!-- Modal ikkuna, avataan kun käyttäjä painaa plus nappulaa -->
+<div class="modal fade" id="categoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Lisää kategoria</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="categoryForm">
+            <input type="text" name="Name" class="form-control" placeholder="Nimi">
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Sulje</button>
+        <button id="saveCategory" type="button" class="btn btn-primary">Tallenna</button>
+      </div>
+    </div>  
+  </div>
+</div>
+
+<script>
+  $(() => {
+    //Enter press event
+    $(document).keypress(function(e) {
+        if(e.which == 13) {            
+            postPress();
+        }
+    });
+
+    $('#saveCategory').click((e) => {
+      e.preventDefault();
+      postPress();
+    });
+  })
+
+  function postPress(){
+    var data = $('#categoryForm').serialize();
+    console.log(data);
+
+    $.post('@Url.Action("AddCategory")', data, (response) => {
+        // Jos responsen status tulee truena takaisin suljetaan modaali ja päivitetään
+        // sivu jotta uusi kategoria tulee näkyviin
+        console.log(data); 
+        if (response.status) {
+            $('#categoryModal').modal("hide");
+            window.location.reload()
+        }
+    }).fail((data) => {
+        alert(data.message);
+    });
+  }
+</script>

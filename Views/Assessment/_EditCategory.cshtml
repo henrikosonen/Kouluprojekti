@@ -1,0 +1,66 @@
+@model Apoa.Models.ViewModels.EditCategoryViewModel
+
+<!-- Modal ikkuna, avataan kun käyttäjä painaa plus nappulaa -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" role="dialog" aria-labelledby="categoryModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Muokkaa kategoriaa</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editCategoryForm">
+          <input type="hidden" id="Id" name="Id" value="@Model.Category.Id">
+          <input type="text" name="Name" class="form-control" placeholder="Nimi" value="@Model.Category.Name">
+          
+          <label for="multiple-selected">Näkyvyys</label>
+
+          <select name="GroupIds" id="multiple-selected" multiple="multiple">
+            @foreach(var g in Model.Groups) {
+              if (Model.GroupIds.Contains(g.Id)) {
+                <option value="@g.Id" selected>@g.Name</option>
+              } else {
+                <option value="@g.Id">@g.Name</option>
+              }
+            }
+          </select>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger" data-dismiss="modal">Sulje</button>
+        <button id="saveCategory" type="button" class="btn btn-primary">Tallenna</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+  $(() => {
+    $('#saveCategory').click((e) => {
+      e.preventDefault();
+      var data = $('#editCategoryForm').serialize();
+      console.log(data);
+      
+      $.post('@Url.Action("EditCategory")', data, (response) => {
+        // Jos responsen status tulee truena takaisin suljetaan modaali ja päivitetään
+        // sivu jotta uusi kategoria tulee näkyviin
+        console.log(data); 
+        if (response.status) {
+          $('#editCategoryModal').modal("hide");
+          location.reload();
+        }
+      }).fail((data) => {
+        alert(data.message);
+      });
+    });
+
+    $('#multiple-selected').multiselect({
+      nonSelectedText : "Ei yhtään valittua",
+      allSelectedText: 'Kaikki valittuna'
+    });
+  })
+</script>
+

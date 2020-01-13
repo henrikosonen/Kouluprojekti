@@ -1,0 +1,21 @@
+﻿@page
+@model PersonalDataModel
+@{
+    ViewData["ActivePage"] = ManageNavPages.PersonalData;
+}
+
+<h4>Tallennetut tiedot</h4>
+
+<div class="row" style="padding-top: 10px">
+    <div class="col-md-6">
+        <p>Käyttäjätilisi sisältää henkilökohtaisia ​​tietoja, joiden käytön olet hyväksynyt rekisteröityessäsi.</p>
+        <p>Alla olevasta painikkeesta voitte tarkastella tallennettuja tietoja. Koskien tietojen poistamista, olkaa yhteydessä palveluntarjoajaan.</p>
+        <form id="download-data" asp-page="DownloadPersonalData" method="post" class="form-group">
+            <button class="btn btn-primary" type="submit">Lataa</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

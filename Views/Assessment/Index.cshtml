@@ -1,0 +1,139 @@
+@model List<Apoa.Models.Category>;
+
+<div class="row">
+    <div class="col-md-8">
+        <h1>Arvioinnit</h1>
+    </div>
+    <div class="col-md-4 text-right">
+        <!-- Nappula joka triggeröi modaalin-->
+        <button type="button" class="addCategory btn btn-primary" data-toggle="modal" data-target="#categoryModal">Lisää kategoria</button>
+    </div>
+</div>
+
+<!-- Tulostetaan kaikki kategoriat, joiden alle tulostetaan kaikki kategoriaan kuuluvat kysymykset -->
+@foreach (var category in Model)
+{
+    <div class="row">
+        <div class="col-md-8">
+            <h3><a href="#" class="editCategory" data-id="@category.Id"> @category.Name</a></h3>
+        </div>
+        <div class="col-md-4 text-right">
+            <button type="button" class="btn btn-primary btn-sm addAssessment" data-id="@category.Id" data-toggle="tooltip" title="Lisää kysymys" data-toggle="modal" data-target="#categoryModal">
+                <i class="fas fa-plus"></i>
+            </button>
+            <button type="button" class="btn btn-primary btn-sm editCategory" data-id="@category.Id" data-toggle="tooltip" title="Muokkaa kategoriaa" data-toggle="modal" data-target="#categoryModal">
+                <i class="fas fa-list"></i>
+            </button>
+            <button type="button" class="btn btn-danger btn-sm deleteCategory" data-id="@category.Id" data-toggle="tooltip" title="Poista kategoria">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12">
+            @if (category.Assessments.Any()) {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Nimi</th>
+                            <th>Luotu</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var assessment in category.Assessments) {
+                            var date = assessment.CreatedAt.HasValue ? assessment.CreatedAt.Value.ToShortDateString() : "";
+                            <tr>
+                                <td class="col-md-6"><a class="editAssessment" href="#" data-id="@assessment.Id">@assessment.Name</a></td>
+                                <td class="col-md-5">@date</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            } else {
+                <p style="display:inline">Ei vielä yhtään kysymystä. Lisää uusi kysymys </p> 
+                <button type="button" class="btn btn-primary btn-sm addAssessment" data-id="@category.Id" data-toggle="tooltip" title="Lisää kysymys" data-toggle="modal" data-target="#categoryModal">
+                    <i class="fas fa-plus"></i>
+                </button>
+            }
+        </div>
+    </div>
+} 
+
+<div id="assessmentModalContainer"></div>
+<div id="editAssessmentModalContainer"></div>
+<div id="categoryModalContainer"></div>
+<div id="editCategoryModalContainer"></div>
+
+<script>
+    $(() => {
+        $('.addAssessment').on("click", function() {
+            $.get("@Url.Action("AddAssessment")", {id : $(this).data("id")}, data => {
+                $('#assessmentModalContainer').html(data);
+                $('#assessmentModal').modal("show");
+            }).fail(() => {
+                alert("Jotain meni pieleen");
+            })
+        });
+
+        $('.addCategory').on("click", function() {
+            $.get("@Url.Action("AddCategory")", data => {
+                $('#categoryModalContainer').html(data);
+                $('#categoryModal').modal("show");
+            }).fail(() => {
+                alert("Jotain meni pieleen");
+            })
+        });
+
+        $(".editCategory").on("click", function(e) {
+            e.preventDefault();
+            $.get("@Url.Action("EditCategory")", {id : $(this).data("id") }, data => {
+                $('#editCategoryModalContainer').html(data);
+                $('#editCategoryModal').modal("show");
+            }).fail(() => {
+                alert("Jotain meni pieleen");
+            })
+        });
+
+        $('.editAssessment').on("click", function(e) {
+            e.preventDefault();
+            console.log($(this).data("id"));
+            $.get("@Url.Action("EditAssessment")", {id : $(this).data("id") }, data => {
+                $('#editAssessmentModalContainer').html(data);
+                $('#editAssessmentModal').modal("show");
+            }).fail(() => {
+                alert("Jotain meni pieleen");
+            })
+        });
+
+        $('.deleteAssessment').on("click", function() {
+            if ($(this).data("id") != 0 && $(this).data("id") != 'undefined') {
+                if(window.confirm('Haluatko varmasti poistaa kysymyksen? ')){
+                    $.post("@Url.Action("DeleteAssessment")", {id : $(this).data("id")}, response => {
+                        if (response.status) {
+                            location.reload();
+                        }
+                    }).fail(() => {
+                        alert("Jotain meni pieleen");
+                    });
+                }
+            }
+        })
+
+        $('.deleteCategory').on("click", function() {
+            if ($(this).data("id") != 0 && $(this).data("id") != 'undefined') {
+                if (window.confirm('Haluatko varmasti poistaa kategorian? ')) {
+                    $.post("@Url.Action("DeleteCategory")", {id : $(this).data("id")}, response => {
+                        if (response.status) {
+                            location.reload();
+                        }
+                    }).fail(() => {
+                        alert("Jotain meni pieleen");
+                    });
+                } else {
+                    //return false;
+                }                  
+            }
+        })
+        $('[data-toggle="tooltip"]').tooltip()
+    });
+</script>

@@ -1,0 +1,98 @@
+﻿@page
+@model LoginModel
+
+
+<div class="row">
+    <div class="col col-sm-3 col-lg-4 col-md-3"></div>
+    <div class="col-md-6 col-sm-6 center" style="background-color:white;">
+        <section>
+
+            <form id="account" method="post">
+                <div style="background-color:white;" class="text-center">
+                <img src="~/img/apoa.png" style="" alt="" class="img-fluid">
+                </div>
+                <div asp-validation-summary="All" class="text-danger"></div>
+                <div class="form-group">
+                    <!-- <label asp-for="Input.Email"></label> -->
+                    <input asp-for="Input.Email" class="form-control" placeholder="Sähköpostiosoite"/>
+                    <!-- <span asp-validation-for="Input.Email" class="text-danger"></span> -->
+                </div>
+                <div class="form-group">
+                    <!-- <label asp-for="Input.Password"></label> -->
+                    <input asp-for="Input.Password" class="form-control" placeholder="Salasana"/>
+                    <!-- <span asp-validation-for="Input.Password" class="text-danger"></span> -->
+                </div>
+                <!-- <div class="form-group">
+                    <div class="checkbox">
+                        <label asp-for="Input.RememberMe"></label>
+                            <input asp-for="Input.RememberMe" />
+                            <label>Muista minut!</label>
+                        </label>
+                    </div>
+                </div> -->
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary w-100">Kirjadu sisään</button>
+                </div>
+            </form>
+        </section>
+        <section>
+            @{
+                if ((Model.ExternalLogins?.Count ?? 0) == 0)
+                {
+                    <div>
+                        <p>
+                            There are no external authentication services configured. See <a href="https://go.microsoft.com/fwlink/?LinkID=532715">this article</a>
+                            for details on setting up this ASP.NET application to support logging in via external services.
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
+                        <div>
+                            <p>
+                                @foreach (var provider in Model.ExternalLogins)
+                                {
+                                    <button type="submit" class="btn btn-primary w-100" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">Kirjaudu Savonian tunnuksella</button>
+                                }
+                            </p>
+                        </div>
+                    </form>
+                }
+            }
+        </section>
+        <div class="text-center">
+            <p>
+                <a id="forgot-password" asp-page="./ForgotPassword">Unohtuiko salasanasi?</a>
+            </p>
+
+            <p>
+                <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl">Rekisteröidy uutena käyttäjänä</a>
+            </p>
+        </div>
+    </div>
+    <div class="col col-sm-3 col-lg-4 col-md-3"></div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+
+<style>
+        html body {
+            height:100%
+        }
+
+        body {
+            background-color:rgb(86, 79, 163);
+        }
+
+        .center {
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            -ms-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+</style>
